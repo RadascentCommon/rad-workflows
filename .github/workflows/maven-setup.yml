@@ -1,5 +1,6 @@
 
-name: Reusable workflow for Java CI with Maven; calls clean install deploy lifecycles.
+name: maven-setup
+description: Common maven setup steps
 
 on:
   workflow_call:

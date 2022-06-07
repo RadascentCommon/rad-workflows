@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: Radascent/rad-workflows/.github/workflows/maven-setup.yml@main
+    - uses: Radascent/rad-workflows/.github/workflows/maven-setup
       with:
         maven_settings_secret: ${{ secrets.maven_settings_secret }}
         BUILD_USR: ${{ secrets.BUILD_USR }}
