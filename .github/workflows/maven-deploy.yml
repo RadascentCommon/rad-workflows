@@ -11,12 +11,6 @@ on:
         required: true
         type: string
     secrets:
-      maven_settings_secret:
-        required: true
-      BUILD_USR:
-        required: true
-      BUILD_KEY:
-        required: true
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
@@ -25,12 +19,7 @@ on:
         required: false
   
 jobs:
-  call-maven-setup:
-    uses: Radascent/rad-workflows/.github/workflows/maven-setup.yml@main
-    secrets: inherit
- 
-  mvn-build:
+  mvn-deploy:
     runs-on: ubuntu-latest
-    needs: call-maven-setup
     steps:
       - run: mvn -B clean install deploy
