@@ -1,2 +1,2 @@
-# rad-work-flows
+# rad-workflows
 Repo for basic reuseable workflows.
