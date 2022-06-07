@@ -3,6 +3,26 @@ name: Reusable workflow for Java CI with Maven; calls clean install deploy lifec
 
 on:
   workflow_call:
+    inputs:
+      GITHUB_ACTOR:
+        required: true
+        type: string
+      GITHUB_TOKEN:
+        required: true
+        type: string
+    secrets:
+      maven_settings_secret:
+        required: true
+      BUILD_USR:
+        required: true
+      BUILD_KEY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      AWS_REGION:
+        required: false
   
 jobs:
   build:
