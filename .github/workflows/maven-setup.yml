@@ -1,6 +1,5 @@
 
 name: maven-setup
-description: Common maven setup steps
 
 on:
   workflow_call:
@@ -13,7 +12,8 @@ on:
         required: true
   
 jobs:
-  setup:
+  mvn-setup:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
 
