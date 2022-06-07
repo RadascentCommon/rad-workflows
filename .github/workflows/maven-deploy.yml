@@ -4,13 +4,16 @@ name: Reusable workflow for Java CI with Maven; calls clean install deploy lifec
 on:
   workflow_call:
     inputs:
-      GITHUB_ACTOR:
-        required: true
-        type: string
-      GITHUB_TOKEN:
+      MVN_CACHE_ID:
         required: true
         type: string
     secrets:
+      maven_settings_secret:
+        required: true
+      BUILD_USR:
+        required: true
+      BUILD_KEY:
+        required: true
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
@@ -19,7 +22,33 @@ on:
         required: false
   
 jobs:
-  mvn-deploy:
+  build:
+
     runs-on: ubuntu-latest
+
     steps:
-      - run: mvn -B clean install deploy
+    - uses: actions/checkout@v3
+
+    - name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ inputs.MVN_CACHE_ID }}-maven-
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Get custom settings.xml
+      run: |
+        curl ${{ secrets.maven_settings_secret }} https://api.bitbucket.org/2.0/repositories/radascent/parent-pom/src/master/MavenSettings4GitHubCI_CD.xml > ~/.m2/settings.xml
+        sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
+        sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
+ 
+    - name: Build with Maven
+      run: mvn -B clean install deploy
