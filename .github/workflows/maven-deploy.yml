@@ -25,16 +25,12 @@ on:
         required: false
   
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: Radascent/rad-workflows/.github/workflows/maven-setup
-      with:
-        maven_settings_secret: ${{ secrets.maven_settings_secret }}
-        BUILD_USR: ${{ secrets.BUILD_USR }}
-        BUILD_KEY: ${{ secrets.BUILD_KEY }}
+  call-maven-setup:
+    uses: Radascent/rad-workflows/.github/workflows/maven-setup.yml@main
+    secrets: inherit
  
-    - name: Build with Maven
-      run: mvn -B clean install deploy
+  mvn-build:
+    runs-on: ubuntu-latest
+    needs: call-maven-setup
+    steps:
+      - run: mvn -B clean install deploy
