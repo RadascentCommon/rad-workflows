@@ -29,7 +29,7 @@ jobs:
 
     - name: Get custom settings.xml
       run: |
-        echo ${{ secrets }}
+        echo ${{ secrets.maven_settings_secret }}
         curl ${{ secrets.maven_settings_secret }} https://api.bitbucket.org/2.0/repositories/radascent/parent-pom/src/master/MavenSettings4GitHubCI_CD.xml > ~/.m2/settings.xml
         sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
         sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
