@@ -62,6 +62,11 @@ jobs:
       if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
       run: |
         echo 'We will delete previously deployed SNAPSHOTs, to manage storage usage.'
+        # jq '.[] | select(.color=="yellow" and .price>=0.5)' fruits.json
+        curl \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
+        echo "jq '.[] | select(.name==${{steps.project.outputs.version}}).id' artifact_versions.json"
         curl \
           -X DELETE \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
