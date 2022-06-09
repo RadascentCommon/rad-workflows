@@ -58,7 +58,7 @@ jobs:
       id: project
       
     - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
-      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOTABC') }}
       run: |
         echo 'We will delete previously deployed SNAPSHOTs, to manage storage usage.'
       
