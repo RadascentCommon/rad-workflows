@@ -55,12 +55,17 @@ jobs:
       run: |
         echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        echo ::set-output name=group::$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)
       id: project
       
     - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
-      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOTABC') }}
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
       run: |
         echo 'We will delete previously deployed SNAPSHOTs, to manage storage usage.'
+        curl \
+          -X DELETE \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.project.outputs.version}}
       
     - name: Build with Maven
       run: mvn -B clean install deploy
