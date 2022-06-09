@@ -60,6 +60,7 @@ jobs:
       
     - name: get version id for the SNAPSHOT specified above, if SNAPSHOT being deployed
       if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
         curl \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
           https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
