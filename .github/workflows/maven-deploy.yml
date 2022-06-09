@@ -58,19 +58,22 @@ jobs:
         echo ::set-output name=group::$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)
       id: project
       
-    - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
+    - name: get version id for the SNAPSHOT specified above, if SNAPSHOT being deployed
       if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
-      run: |
-        echo 'We will delete previously deployed SNAPSHOTs, to manage storage usage.'
-        # jq '.[] | select(.color=="yellow" and .price>=0.5)' fruits.json
         curl \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
           https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
-        jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json
+        echo ::set-ouput name=id::$(jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json)
+      id: artifact
+      
+    - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        echo 'We will delete previously deployed SNAPSHOTs (id = ${{${{steps.artifact.outputs.id}}}}), to manage storage usage.'
         curl \
           -X DELETE \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
-          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.project.outputs.version}}
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.artifact.outputs.id}}
       
     - name: Build with Maven
       run: mvn -B clean install deploy
