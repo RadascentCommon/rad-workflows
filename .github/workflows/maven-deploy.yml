@@ -70,7 +70,7 @@ jobs:
     - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
       if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
       run: |
-        echo 'We will delete previously deployed SNAPSHOTs (id = ${{${{steps.artifact.outputs.id}}}}), to manage storage usage.'
+        echo 'We will delete previously deployed SNAPSHOTs (id = {{steps.artifact.outputs.id}}), to manage storage usage.'
         curl \
           -X DELETE \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
