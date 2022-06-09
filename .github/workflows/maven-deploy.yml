@@ -51,6 +51,17 @@ jobs:
         sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
         sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
  
+    - name: Extract Maven project version
+      run: |
+        echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+      id: project
+      
+    - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        echo 'We will delete previously deployed SNAPSHOTs, to manage storage usage.'
+      
     - name: Build with Maven
       run: mvn -B clean install deploy
       env:
