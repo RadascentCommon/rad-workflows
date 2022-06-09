@@ -64,7 +64,7 @@ jobs:
         curl \
           -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
           https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
-        echo ::set-ouput name=id::$(jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json)
+        echo ::set-output name=id::$(jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json)
       id: artifact
       
     - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
