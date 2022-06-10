@@ -61,6 +61,7 @@ jobs:
         sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
  
     - name: Extract Maven project version
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
       run: |
         echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)

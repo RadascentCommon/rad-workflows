@@ -11,10 +11,7 @@ on:
       developmentVersion:
         required: true
         type: string
-      AWS_FUNCTION_NAME:
-        required: true
-        type: string
-      AWS_LAMBDA_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
+      AWS_LAMBDA_FUNCTION_NAME_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
         required: true
         type: string
       MVN_CACHE_ID:
@@ -73,7 +70,7 @@ jobs:
 
       - name: Lambda deployment
         run: |
-          for function in ${{ inputs.AWS_LAMBDA_LIST }}; \
+          for function in ${{ inputs.AWS_LAMBDA_FUNCTION_NAME_LIST }}; \
           do aws lambda update-function-code --function-name $function --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar; \
           done \
  
