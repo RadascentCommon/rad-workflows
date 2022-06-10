@@ -39,7 +39,7 @@ jobs:
   aws-deploy:
     strategy:
       matrix:
-        lambda-function-name: ${{ inputs.AWS_LAMBDA_LIST }}
+        lambda-function-name: [${{ inputs.AWS_LAMBDA_LIST }}]
         
     runs-on: ubuntu-latest
 
