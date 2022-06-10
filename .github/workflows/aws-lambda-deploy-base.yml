@@ -37,9 +37,9 @@ on:
   
 jobs:
   aws-deploy:
-#    strategy:
-#      matrix:
-#        lambda-function-name: ${{ inputs.AWS_LAMBDA_LIST }}
+    strategy:
+      matrix:
+        lambda-function-name: ${{ inputs.AWS_LAMBDA_LIST }}
         
     runs-on: ubuntu-latest
 
@@ -73,5 +73,5 @@ jobs:
 
       - name: Lambda deployment
         run: |
-          aws lambda update-function-code --function-name ${{ inputs.AWS_FUNCTION_NAME }} --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar
+          aws lambda update-function-code --function-name ${{ matrix.lambda-function-name }} --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar
  
