@@ -1,0 +1,74 @@
+name: Reusable workflow for AWS Lambda Deployment
+on:
+  workflow_call:
+    inputs:
+      GROUP_ID:
+        required: true
+        type: string
+      ARTIFACT_ID:
+        required: true
+        type: string
+      developmentVersion:
+        required: true
+        type: string
+      AWS_LAMBDA_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
+        required: true
+        type: string
+      MVN_CACHE_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: false
+        type: string
+    secrets:
+      maven_settings_secret:
+        required: true
+      BUILD_USR:
+        required: true
+      BUILD_KEY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+  
+jobs:
+  aws-deploy:
+    strategy:
+      matrix:
+        lambda-function-name: ${{ github.event.inputs.AWS_LAMBDA_LIST }}
+        
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: aws authentication
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ github.event.inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ github.event.inputs.MVN_CACHE_ID }}-maven-
+
+      - name: Download artifact by version referred in input
+        run: |
+          curl ${{ secrets.maven_settings_secret }} https://api.bitbucket.org/2.0/repositories/radascent/parent-pom/src/master/MavenSettings4GitHubCI_CD.xml > settings.xml
+          sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' settings.xml
+          sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' settings.xml
+          mvn dependency:get \
+            -DremoteRepositories=https://maven.pkg.github.com/Radascent/maven-repos-external \
+            -Dartifact=${{ github.event.inputs.GROUP_ID }}:${{ github.event.inputs.ARTIFACT_ID }}:${{ github.event.inputs.developmentVersion }}:jar:shaded \
+            -Dtransitive=false \
+            -Ddest=${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar \
+            -s settings.xml
+
+      - name: Lambda deployment
+        run: |
+          aws lambda update-function-code --function-name ${{ matrix.lambda-function-name}} --zip-file fileb://./${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar
+ 
