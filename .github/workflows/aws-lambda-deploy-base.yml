@@ -16,7 +16,7 @@ on:
         type: string
       AWS_LAMBDA_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
         required: true
-        type: string
+        type: array
       MVN_CACHE_ID:
         required: true
         type: string
@@ -37,9 +37,9 @@ on:
   
 jobs:
   aws-deploy:
-    strategy:
-      matrix:
-        lambda-function-name: [${{ inputs.AWS_LAMBDA_LIST }}]
+#    strategy:
+#      matrix:
+#        lambda-function-name: [${{ inputs.AWS_LAMBDA_LIST }}]
         
     runs-on: ubuntu-latest
 
@@ -73,5 +73,8 @@ jobs:
 
       - name: Lambda deployment
         run: |
-          aws lambda update-function-code --function-name ${{ matrix.lambda-function-name }} --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar
+          for function in ${{ inputs.AWS_LAMBDA_LIST }}\
+          do \
+            aws lambda update-function-code --function-name $function --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar \
+          done
  
