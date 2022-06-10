@@ -39,7 +39,7 @@ jobs:
   aws-deploy:
 #    strategy:
 #      matrix:
-#        lambda-function-name: ${{ github.event.inputs.AWS_LAMBDA_LIST }}
+#        lambda-function-name: ${{ inputs.AWS_LAMBDA_LIST }}
         
     runs-on: ubuntu-latest
 
@@ -55,9 +55,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ github.event.inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ github.event.inputs.MVN_CACHE_ID }}-maven-
+            ${{ inputs.MVN_CACHE_ID }}-maven-
 
       - name: Download artifact by version referred in input
         run: |
@@ -66,12 +66,12 @@ jobs:
           sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' settings.xml
           mvn dependency:get \
             -DremoteRepositories=https://maven.pkg.github.com/Radascent/maven-repos-external \
-            -Dartifact=${{ github.event.inputs.GROUP_ID }}:${{ github.event.inputs.ARTIFACT_ID }}:${{ github.event.inputs.developmentVersion }}:jar:shaded \
+            -Dartifact=${{ inputs.GROUP_ID }}:${{ inputs.ARTIFACT_ID }}:${{ inputs.developmentVersion }}:jar:shaded \
             -Dtransitive=false \
-            -Ddest=${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar \
+            -Ddest=${{ inputs.ARTIFACT_ID }}-shaded.jar \
             -s settings.xml
 
       - name: Lambda deployment
         run: |
-          aws lambda update-function-code --function-name ${{ github.event.inputs.AWS_FUNCTION_NAME }} --zip-file fileb://./${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar
+          aws lambda update-function-code --function-name ${{ inputs.AWS_FUNCTION_NAME }} --zip-file fileb://./${{ inputs.ARTIFACT_ID }}-shaded.jar
  
