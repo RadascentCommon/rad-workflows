@@ -11,6 +11,9 @@ on:
       developmentVersion:
         required: true
         type: string
+      AWS_FUNCTION_NAME:
+        required: true
+        type: string
       AWS_LAMBDA_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
         required: true
         type: string
@@ -34,9 +37,9 @@ on:
   
 jobs:
   aws-deploy:
-    strategy:
-      matrix:
-        lambda-function-name: ${{ github.event.inputs.AWS_LAMBDA_LIST }}
+#    strategy:
+#      matrix:
+#        lambda-function-name: ${{ github.event.inputs.AWS_LAMBDA_LIST }}
         
     runs-on: ubuntu-latest
 
@@ -70,5 +73,5 @@ jobs:
 
       - name: Lambda deployment
         run: |
-          aws lambda update-function-code --function-name ${{ matrix.lambda-function-name}} --zip-file fileb://./${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar
+          aws lambda update-function-code --function-name ${{ github.event.inputs.AWS_FUNCTION_NAME }} --zip-file fileb://./${{ github.event.inputs.ARTIFACT_ID }}-shaded.jar
  
