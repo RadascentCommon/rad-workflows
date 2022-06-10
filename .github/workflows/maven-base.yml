@@ -32,7 +32,7 @@ jobs:
 
     steps:
     - name: check for valid MVN_LIFECYCLE
-      if: ${{ inputs.MVN_LIFECYCLE != 'DEPLOY' || inputs.MVN_LIFECYCLE != 'RELEASE' }}
+      if: ${{ inputs.MVN_LIFECYCLE != 'DEPLOY' && inputs.MVN_LIFECYCLE != 'RELEASE' }}
       run: |
         echo 'Only DEPLOY or RELEASE values allowed for MVN_LIFECYCLE'
         exit 1
