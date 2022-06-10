@@ -73,9 +73,6 @@ jobs:
 
       - name: Lambda deployment
         run: |
-          for function in ${{ inputs.AWS_LAMBDA_LIST }} \
-          do \
-            echo $function \
-          done \
+          for function in ${{ inputs.AWS_LAMBDA_LIST }}; do echo $function ; done
           
  
