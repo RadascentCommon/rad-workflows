@@ -16,7 +16,7 @@ on:
         type: string
       AWS_LAMBDA_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
         required: true
-        type: array
+        type: string
       MVN_CACHE_ID:
         required: true
         type: string
