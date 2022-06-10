@@ -94,13 +94,13 @@ jobs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
     - name: git config
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' }}
       run: |
         git config user.email "actions@github.com"
         git config user.name "GitHub Actions"
 
     - name: Maven Release
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' }}
       run: mvn release:prepare release:perform
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
