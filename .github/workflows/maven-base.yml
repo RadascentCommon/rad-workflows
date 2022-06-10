@@ -1,0 +1,108 @@
+
+name: Reusable workflow for Java CI with Maven; calls clean install deploy lifecycles.
+
+on:
+  workflow_call:
+    inputs:
+      MVN_LIFECYCLE:	# only DEPLOY / RELEASE are allowed values.
+        required: true
+        type: string
+      MVN_CACHE_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: false
+        type: string
+    secrets:
+      maven_settings_secret:
+        required: true
+      BUILD_USR:
+        required: true
+      BUILD_KEY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check for valid MVN_LIFECYCLE
+      if: ${{ inputs.MVN_LIFECYCLE != 'DEPLOY' || inputs.MVN_LIFECYCLE != 'RELEASE' }}
+      run: |
+        echo 'Only DEPLOY or RELEASE values allowed for MVN_LIFECYCLE'
+        exit 1
+      
+    - uses: actions/checkout@v3
+
+    - name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ inputs.MVN_CACHE_ID }}-maven-
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Get custom settings.xml
+      run: |
+        curl ${{ secrets.maven_settings_secret }} https://api.bitbucket.org/2.0/repositories/radascent/parent-pom/src/master/MavenSettings4GitHubCI_CD.xml > ~/.m2/settings.xml
+        sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
+        sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
+ 
+    - name: Extract Maven project version
+      run: |
+        echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        echo ::set-output name=group::$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)
+      id: project
+      
+    - name: get version id for the SNAPSHOT specified above, if SNAPSHOT being deployed
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        curl \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
+        echo ::set-output name=id::$(jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json)
+      id: artifact
+      
+    - name: Remove SNAPSHOT artifact, if SNAPSHOT being deployed
+      if: ${{ endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        echo 'We will delete previously deployed ${{steps.project.outputs.version}} (with id = ${{steps.artifact.outputs.id}}), to manage storage usage.'
+        curl \
+          -X DELETE \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.artifact.outputs.id}}
+      
+    - name: Maven deploy
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      run: mvn -B clean install deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
+    - name: git config
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      run: |
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
+
+    - name: Maven Release
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      run: mvn release:prepare release:perform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
