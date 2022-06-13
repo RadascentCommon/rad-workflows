@@ -11,7 +11,7 @@ on:
       developmentVersion:
         required: true
         type: string
-      AWS_LAMBDA_FUNCTION_NAME_LIST:	# List of lambda function-names to be deployed with the same artifact, comma separated string
+      AWS_LAMBDA_FUNCTION_NAME_LIST:	# List of lambda function-names to be deployed with the same artifact, space separated string list
         required: true
         type: string
       MVN_CACHE_ID:
@@ -34,9 +34,6 @@ on:
   
 jobs:
   aws-deploy:
-#    strategy:
-#      matrix:
-#        lambda-function-name: [${{ inputs.AWS_LAMBDA_LIST }}]
         
     runs-on: ubuntu-latest
 
