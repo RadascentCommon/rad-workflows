@@ -97,7 +97,7 @@ jobs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
     - name: SonarCloud scan
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && secrets.SONAR_TOKEN != null }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ github.token }}
