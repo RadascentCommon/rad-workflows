@@ -13,6 +13,9 @@ on:
       AWS_REGION:
         required: false
         type: string
+      INCLUDE_SONAR_SCAN:
+        required: false
+        type: string
     secrets:
       maven_settings_secret:
         required: true
@@ -97,7 +100,7 @@ jobs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
     - name: SonarCloud scan
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && inputs.INCLUDE_SONAR_SCAN != null }}
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ github.token }}
