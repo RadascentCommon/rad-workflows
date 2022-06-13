@@ -92,21 +92,21 @@ jobs:
           https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.artifact.outputs.id}}
       
     - name: Maven deploy
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && inputs.INCLUDE_SONAR_SCAN == null }}
       run: mvn -B clean install deploy
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
-    - name: SonarCloud scan
+    - name: Maven deploy with sonar
       if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && inputs.INCLUDE_SONAR_SCAN != null }}
-      uses: sonarsource/sonarcloud-github-action@master
+      run: mvn -B clean install deploy verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.java.pmd.path=target/pmd.xml
       env:
-        GITHUB_TOKEN: ${{ github.token }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
         
-
     - name: Maven Release
       if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' }}
       run:  |
