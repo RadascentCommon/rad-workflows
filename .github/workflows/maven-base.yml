@@ -1,5 +1,5 @@
 
-name: Reusable workflow for Java CI with Maven; calls clean install deploy lifecycles.
+name: Reusable workflow for Java CI with Maven; calls clean install deploy release lifecycles.
 
 on:
   workflow_call:
@@ -20,6 +20,8 @@ on:
         required: true
       BUILD_KEY:
         required: true
+      SONAR_TOKEN:
+        required: false
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
@@ -94,6 +96,14 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
+    - name: SonarCloud scan
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && secrets.SONAR_TOKEN != null }}
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        
+
     - name: Maven Release
       if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' }}
       run:  |
