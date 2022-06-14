@@ -110,7 +110,8 @@ jobs:
     - name: Maven deploy with sonar
       if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
       run: mvn -B clean install deploy \
-        verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+        verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+        -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
         -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} \
         -Dsonar.java.pmd.path=target/pmd.xml \
         
