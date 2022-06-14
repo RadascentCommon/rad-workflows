@@ -16,6 +16,9 @@ on:
       INCLUDE_SONAR_SCAN:
         required: false
         type: string
+      SONAR_PROJECT_KEY:
+        required: false
+        type: string
     secrets:
       maven_settings_secret:
         required: true
@@ -40,6 +43,11 @@ jobs:
       if: ${{ inputs.MVN_LIFECYCLE != 'DEPLOY' && inputs.MVN_LIFECYCLE != 'RELEASE' }}
       run: |
         echo 'Only DEPLOY or RELEASE values allowed for MVN_LIFECYCLE'
+        exit 1
+    - name: check sonar props, if sonar included
+      if: ${{ inputs.INCLUDE_SONAR_SCAN == 'YES' && (inputs.SONAR_PROJECT_KEY == null || inputs.SONAR_PROJECT_KEY == '') }}
+      run: |
+        echo 'Sonar scan needs a valid SONAR_PROJECT_KEY'
         exit 1
       
     - uses: actions/checkout@v3
@@ -100,8 +108,13 @@ jobs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
     - name: Maven deploy with sonar
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
-      run: mvn -B clean install deploy verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.java.pmd.path=target/pmd.xml
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' \
+        && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
+      run: mvn -B clean install deploy \
+        verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+        -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} \
+        -Dsonar.java.pmd.path=target/pmd.xml \
+        
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
