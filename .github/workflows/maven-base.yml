@@ -112,7 +112,7 @@ jobs:
       run: mvn -B clean install deploy \
         verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
         -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-        -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} \
+        -Dsonar.projectKey='${{ inputs.SONAR_PROJECT_KEY }}' \
         -Dsonar.java.pmd.path=target/pmd.xml \
         
       env:
