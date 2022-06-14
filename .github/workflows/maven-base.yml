@@ -108,8 +108,7 @@ jobs:
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
     - name: Maven deploy with sonar
-      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' \
-        && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
       run: mvn -B clean install deploy \
         verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
         -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} \
