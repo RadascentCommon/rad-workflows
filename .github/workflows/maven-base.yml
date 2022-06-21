@@ -13,6 +13,9 @@ on:
       AWS_REGION:
         required: false
         type: string
+      ADDITIONAL_PROFILE_BUILDS:	# list of additional profiles
+        required: false
+        type: string
       INCLUDE_SONAR_SCAN:
         required: false
         type: string
@@ -107,10 +110,20 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ inputs.AWS_REGION }}
         
+    - name: Maven deploy additional profiles
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && inputs.ADDITIONAL_PROFILE_BUILDS != null }}
+      run: |
+        for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
+        do mvn -B deploy -P profile; \
+        done \
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
     - name: Maven deploy with sonar
       if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
       run: mvn -B clean install deploy verify -P sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} -Dsonar.java.pmd.path=target/pmd.xml
-        
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
