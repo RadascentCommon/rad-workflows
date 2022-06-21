@@ -63,7 +63,7 @@ jobs:
           sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' settings.xml
           mvn dependency:get \
             -DremoteRepositories=https://maven.pkg.github.com/Radascent/maven-repos-external \
-            -Dartifact=${{ inputs.GROUP_ID }}:${{ inputs.ARTIFACT_ID }}:${{ inputs.developmentVersion }}:jar:${{ inputs.ARTIFACT_SHADED_JAR_PREFIX }}-shaded \
+            -Dartifact=${{ inputs.GROUP_ID }}:${{ inputs.ARTIFACT_ID }}:${{ inputs.developmentVersion }}:jar:${{ inputs.ARTIFACT_SHADED_JAR_PREFIX }} \
             -Dtransitive=false \
             -Ddest=${{ inputs.ARTIFACT_ID }}-shaded.jar \
             -s settings.xml
