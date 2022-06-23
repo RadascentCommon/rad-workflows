@@ -83,7 +83,7 @@ jobs:
         sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
  
     - name: Extract Maven project version
-#      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
       run: |
         echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
@@ -152,7 +152,7 @@ jobs:
         cd target/checkout
         for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
         do mvn -B clean install -P $profile -DskipTests=true; \
-        mvn deploy:deploy-file -Dfile=target/${{steps.project.outputs.artifact}}-${{steps.project.outputs.version}}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO_ID }} -Durl=${{ inputs.RELEASE_REPO_URL }} -DgroupId=${{steps.project.outputs.group}} -DartifactId=${{steps.project.outputs.artifact}} -Dversion=${{steps.project.outputs.version}} -Dclassifier=$profile --fail-never; \
+        mvn deploy:deploy-file -Dfile=target/\${project.artifactId}-\${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO_ID }} -Durl=${{ inputs.RELEASE_REPO_URL }} -DgroupId=\${project.groupId} -DartifactId=\${project.artifactId} -Dversion=\${project.version} -Dclassifier=$profile --fail-never; \
         done \
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
