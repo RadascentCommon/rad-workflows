@@ -16,7 +16,10 @@ on:
       ADDITIONAL_PROFILE_BUILDS:	# list of additional profiles
         required: false
         type: string
-      RELEASE_REPO:	# for additional profiles to push releases
+      RELEASE_REPO_ID:	# for additional profiles to push releases, this should be server_id from settings.xml
+        required: false
+        type: string
+      RELEASE_REPO_URL:	# for additional profiles to push releases, this should be distributionManagement url
         required: false
         type: string
       INCLUDE_SONAR_SCAN:
@@ -149,7 +152,7 @@ jobs:
         cd target/checkout
         for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
         do mvn -B clean install -P $profile -DskipTests=true; \
-        mvn deploy:deploy-file -Dfile=target/${project.artifactId}-${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO }} -DgroupId=${project.groupId} -DartifactId=${project.artifactId} -Dversion=${project.version} -Dclassifier=$profile --fail-never; \
+        mvn deploy:deploy-file -Dfile=target/${project.artifactId}-${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO_ID }} -Durl=${{ inputs.RELEASE_REPO_URL }} -DgroupId=${project.groupId} -DartifactId=${project.artifactId} -Dversion=${project.version} -Dclassifier=$profile --fail-never; \
         done \
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
