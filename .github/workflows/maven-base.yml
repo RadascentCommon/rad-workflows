@@ -16,6 +16,9 @@ on:
       ADDITIONAL_PROFILE_BUILDS:	# list of additional profiles
         required: false
         type: string
+      RELEASE_REPO:	# for additional profiles to push releases
+        required: false
+        type: string
       INCLUDE_SONAR_SCAN:
         required: false
         type: string
@@ -146,7 +149,7 @@ jobs:
         cd target/checkout
         for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
         do mvn -B clean install -P $profile -DskipTests=true; \
-        do mvn deploy:deploy-file -Dfile=target/${project.artifactId}-${project.version}-$profile.jar -DrepositoryId=https://maven.pkg.github.com/Radascent/maven-repos-external -DgroupId=${project.groupId} -DartifactId=${project.artifactId} -Dversion=${project.version} -Dclassifier=$profile --fail-never; \
+        mvn deploy:deploy-file -Dfile=target/${project.artifactId}-${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO }} -DgroupId=${project.groupId} -DartifactId=${project.artifactId} -Dversion=${project.version} -Dclassifier=$profile --fail-never; \
         done \
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
