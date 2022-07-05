@@ -24,8 +24,6 @@ on:
         required: false
         type: string
     secrets:
-      maven_settings_secret:
-        required: true
       BUILD_USR:
         required: true
       BUILD_KEY:
@@ -58,7 +56,7 @@ jobs:
 
       - name: Download artifact by version referred in input
         run: |
-          curl ${{ secrets.maven_settings_secret }} https://api.bitbucket.org/2.0/repositories/radascent/parent-pom/src/master/MavenSettings4GitHubCI_CD.xml > settings.xml
+          curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.BUILD_KEY }}" "https://raw.githubusercontent.com/RadascentCommon/rad-parent-pom/master/MavenSettings4GitHubCI_CD.xml" > ~/.m2/settings.xml
           sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' settings.xml
           sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' settings.xml
           mvn dependency:get \
