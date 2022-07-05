@@ -76,7 +76,7 @@ jobs:
 
     - name: Get custom settings.xml
       run: |
-        curl https://api.github.com/repos/RadascentCommon/rad-parent-pom/contents/MavenSettings4GitHubCI_CD.xml > ~/.m2/settings.xml
+        curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.BUILD_KEY }}" "https://raw.githubusercontent.com/RadascentCommon/rad-parent-pom/master/MavenSettings4GitHubCI_CD.xml" > ~/.m2/settings.xml
         sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
         sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
  
