@@ -28,17 +28,17 @@ on:
       SONAR_PROJECT_KEY:
         required: false
         type: string
-    secrets:
-      BUILD_USR:
-        required: true
-      BUILD_KEY:
-        required: true
-      SONAR_TOKEN:
-        required: false
-      AWS_ACCESS_KEY_ID:
-        required: false
-      AWS_SECRET_ACCESS_KEY:
-        required: false
+#    secrets:
+#      BUILD_USR:
+#        required: true
+#      BUILD_KEY:
+#        required: true
+#      SONAR_TOKEN:
+#        required: false
+#      AWS_ACCESS_KEY_ID:
+#        required: false
+#      AWS_SECRET_ACCESS_KEY:
+#        required: false
   
 jobs:
   build:
