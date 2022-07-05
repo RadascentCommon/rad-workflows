@@ -29,8 +29,6 @@ on:
         required: false
         type: string
     secrets:
-      maven_settings_secret:
-        required: true
       BUILD_USR:
         required: true
       BUILD_KEY:
