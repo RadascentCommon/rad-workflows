@@ -46,14 +46,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
           
-      - name: Cache local Maven repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ inputs.MVN_CACHE_ID }}-maven-
-
       - name: Download artifact by version referred in input
         run: |
           curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.BUILD_KEY }}" "https://raw.githubusercontent.com/RadascentCommon/rad-parent-pom/master/MavenSettings4GitHubCI_CD.xml" > settings.xml
