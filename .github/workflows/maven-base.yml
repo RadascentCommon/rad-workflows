@@ -59,14 +59,6 @@ jobs:
       
     - uses: actions/checkout@v3
 
-    - name: Cache local Maven repository
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2/repository
-        key: ${{ inputs.MVN_CACHE_ID }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ inputs.MVN_CACHE_ID }}-maven-
-
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
