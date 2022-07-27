@@ -141,7 +141,7 @@ jobs:
       run: |
         cd target/checkout
         for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
-        do mvn -B clean install -P $profile -DskipTests=true; \
+        do mvn -B install -P $profile -DskipTests=true; \
         mvn deploy:deploy-file -Dfile=target/\${project.artifactId}-\${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO_ID }} -Durl=${{ inputs.RELEASE_REPO_URL }} -DgroupId=\${project.groupId} -DartifactId=\${project.artifactId} -Dversion=\${project.version} -Dclassifier=$profile --fail-never; \
         done \
       env:
