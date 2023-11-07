@@ -1,0 +1,151 @@
+
+name: Reusable workflow for Java CI with Maven; calls clean install deploy release lifecycles.
+
+on:
+  workflow_call:
+    inputs:
+      MVN_LIFECYCLE:	# only DEPLOY / RELEASE are allowed values.
+        required: true
+        type: string
+      MVN_CACHE_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: false
+        type: string
+      ADDITIONAL_PROFILE_BUILDS:	# list of additional profiles
+        required: false
+        type: string
+      RELEASE_REPO_ID:	# for additional profiles to push releases, this should be server_id from settings.xml
+        required: false
+        type: string
+      RELEASE_REPO_URL:	# for additional profiles to push releases, this should be distributionManagement url
+        required: false
+        type: string
+      INCLUDE_SONAR_SCAN:
+        required: false
+        type: string
+      SONAR_PROJECT_KEY:
+        required: false
+        type: string
+    secrets:
+      BUILD_USR:
+        required: true
+      BUILD_KEY:
+        required: true
+      SONAR_TOKEN:
+        required: false
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: check for valid MVN_LIFECYCLE
+      if: ${{ inputs.MVN_LIFECYCLE != 'DEPLOY' && inputs.MVN_LIFECYCLE != 'RELEASE' }}
+      run: |
+        echo 'Only DEPLOY or RELEASE values allowed for MVN_LIFECYCLE'
+        exit 1
+    - name: check sonar props, if sonar included
+      if: ${{ inputs.INCLUDE_SONAR_SCAN == 'YES' && (inputs.SONAR_PROJECT_KEY == null || inputs.SONAR_PROJECT_KEY == '') }}
+      run: |
+        echo 'Sonar scan needs a valid SONAR_PROJECT_KEY'
+        exit 1
+      
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Get custom settings.xml
+      run: |
+        curl -H "Accept: application/vnd.github+json" -H "Authorization: token ${{ secrets.BUILD_KEY }}" "https://raw.githubusercontent.com/RadascentCommon/rad-parent-pom/master/MavenSettings4GitHubCI_CD.xml" > ~/.m2/settings.xml
+        sed -i 's/#{BUILD_ACTOR}#/${{ secrets.BUILD_USR }}/g' ~/.m2/settings.xml
+        sed -i 's/#{BUILD_TOKEN}#/${{ secrets.BUILD_KEY }}/g' ~/.m2/settings.xml
+
+    - name: Extract Maven project version
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' }}
+      run: |
+        echo ::set-output name=version::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo ::set-output name=artifact::$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        echo ::set-output name=group::$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)
+      id: project
+      
+    - name: get version id for the SNAPSHOT specified above, for MVN lifecycle DEPLOY
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        curl \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions > artifact_versions.json          
+        echo ::set-output name=id::$(jq '.[] | select(.name=="${{steps.project.outputs.version}}").id' artifact_versions.json)
+      id: artifact
+      
+    - name: Remove existing SNAPSHOT artifact for DEPLOY lifecycle
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && endsWith(steps.project.outputs.version, 'SNAPSHOT') }}
+      run: |
+        echo 'We will delete previously deployed ${{steps.project.outputs.version}} (with id = ${{steps.artifact.outputs.id}}), to manage storage usage.'
+        curl \
+          -X DELETE \
+          -u ${{ secrets.BUILD_USR }}:${{ secrets.BUILD_KEY }} \
+          https://api.github.com/orgs/Radascent/packages/maven/${{steps.project.outputs.group}}.${{steps.project.outputs.artifact}}/versions/${{steps.artifact.outputs.id}}
+      
+    - name: Maven deploy
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN == null || inputs.INCLUDE_SONAR_SCAN != 'YES') }}
+      run: mvn -B -U clean install deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
+    - name: Maven deploy with sonar
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && (inputs.INCLUDE_SONAR_SCAN != null && inputs.INCLUDE_SONAR_SCAN == 'YES') }}
+      run: mvn -B clean install deploy verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }} -Dsonar.projectKey=${{ inputs.SONAR_PROJECT_KEY }} -Dsonar.java.pmd.path=target/pmd.xml
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
+    - name: Maven deploy additional profiles
+      if: ${{ inputs.MVN_LIFECYCLE == 'DEPLOY' && inputs.ADDITIONAL_PROFILE_BUILDS != null }}
+      run: |
+        for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
+        do mvn -B deploy -P $profile; \
+        done \
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
+    - name: Maven Release
+      if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' }}
+      run:  |
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
+        mvn release:prepare release:perform
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+
+    - name: Maven release additional profiles
+      if: ${{ inputs.MVN_LIFECYCLE == 'RELEASE' && inputs.ADDITIONAL_PROFILE_BUILDS != null }}
+      run: |
+        cd target/checkout
+        for profile in ${{ inputs.ADDITIONAL_PROFILE_BUILDS }}; \
+        do mvn -B install -P $profile -DskipTests=true; \
+        mvn deploy:deploy-file -Dfile=target/\${project.artifactId}-\${project.version}-$profile.jar -DrepositoryId=${{ inputs.RELEASE_REPO_ID }} -Durl=${{ inputs.RELEASE_REPO_URL }} -DgroupId=\${project.groupId} -DartifactId=\${project.artifactId} -Dversion=\${project.version} -Dclassifier=$profile --fail-never; \
+        done \
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+        
